@@ -1,4 +1,4 @@
-import { app, GOOGLE_PLACES_API_KEY, DEFAULT_LOCATION } from '/firebase-config.js';
+import { app, GOOGLE_PLACES_API_KEY, DEFAULT_LOCATION } from './firebase-config.js';
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Initialize Firestore
