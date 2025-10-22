@@ -28,22 +28,13 @@ Your Firebase project is already configured in `firebase-config.js`. The app use
 6. Choose your preferred location
 7. Click **Enable**
 
-### 3. (Optional) Google Places API Setup
-
-For live restaurant search (currently using mock data):
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable the **Places API**
-3. Create an API key
-4. Update `GOOGLE_PLACES_API_KEY` in `firebase-config.js`
-
-### 4. Install Dependencies
+### 3. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 5. Run the App
+### 4. Run the App
 
 ```bash
 npm start
@@ -104,7 +95,8 @@ Stores restaurant selections:
 
 - **HTML/CSS/JavaScript**: Frontend
 - **Firebase Firestore**: Database
-- **Google Places API**: Restaurant search (optional)
+- **Firebase Cloud Functions**: Serverless backend
+- **OpenStreetMap Overpass API**: Restaurant data (100% free)
 - **Firebase Hosting**: Deployment (optional)
 
 ## Deployment

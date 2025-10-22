@@ -72,7 +72,6 @@
                     <option value="healthy">Healthy - Fresh and nutritious</option>
                     <option value="indulgent">Indulgent - Treat yourself, go big</option>
                     <option value="adventurous">Adventurous - Try something new</option>
-                    <option value="team">Team meal - Good for groups</option>
                 </select>
             </div>
 
@@ -128,12 +127,11 @@
         // Constants
         const PREFERENCES_COLLECTION = 'lunch_preferences';
         const ORDERS_COLLECTION = 'lunch_orders';
-        const GOOGLE_PLACES_API_KEY = "AIzaSyCNq6Xtlr1kvPXl20qlu0p1ND9bjiP5eRA";
         const DEFAULT_LOCATION = {
           lat: 45.1589,
           lng: -93.3954,
           address: "11611 Business Park Blvd N, Champlin, MN 55316",
-          radius: 24140
+          radius: 24140  // 15 miles in meters
         };
 
         // State

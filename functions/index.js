@@ -67,10 +67,17 @@ exports.searchRestaurants = functions.https.onCall(async (data, context) => {
 
     // Process and format the results
     const formattedRestaurants = restaurants
-      .filter(place => place.tags && place.tags.name)
+      .filter(place => {
+        // Only include places with valid coordinates and name
+        if (!place.tags || !place.tags.name) return false;
+        const hasCoords = (place.lat && place.lon) || (place.center && place.center.lat && place.center.lon);
+        return hasCoords;
+      })
       .map(place => {
         const tags = place.tags;
-        const distance = calculateDistance(lat, lng, place.lat || place.center.lat, place.lon || place.center.lon);
+        const placeLat = place.lat || (place.center ? place.center.lat : null);
+        const placeLon = place.lon || (place.center ? place.center.lon : null);
+        const distance = calculateDistance(lat, lng, placeLat, placeLon);
 
         const restaurant = {
           name: tags.name,
@@ -247,11 +254,6 @@ function calculateMatchScore(restaurant, preferences) {
     }
   } else if (dominantMood === 'adventurous') {
     if (restaurant.tags.cuisine && ['thai', 'indian', 'japanese', 'asian'].includes(restaurant.tags.cuisine)) {
-      score += 4;
-    }
-  } else if (dominantMood === 'team') {
-    // Prefer places good for groups (typically those with variety)
-    if (restaurant.tags.cuisine && ['american', 'italian', 'chinese', 'pizza'].includes(restaurant.tags.cuisine)) {
       score += 4;
     }
   }
