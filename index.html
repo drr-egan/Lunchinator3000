@@ -396,19 +396,13 @@
                     restaurants = sortRestaurantsByDistance(restaurants);
                     displayRestaurants(restaurants, mostPopularType);
                 } else {
-                    // Fallback to mock data if no results
-                    console.log('No real restaurants found, using mock data');
-                    let mockRestaurants = getMockRestaurants(mostPopularType);
-                    mockRestaurants = sortRestaurantsByDistance(mockRestaurants);
-                    displayRestaurants(mockRestaurants, mostPopularType);
+                    // No restaurants found
+                    console.log('No restaurants found');
+                    displayNoResults(mostPopularType);
                 }
             } catch (error) {
                 console.error('Error searching restaurants:', error);
-                // Fallback to mock data on error
-                console.log('Using mock data due to error');
-                let mockRestaurants = getMockRestaurants(mostPopularType);
-                mockRestaurants = sortRestaurantsByDistance(mockRestaurants);
-                displayRestaurants(mockRestaurants, mostPopularType);
+                displayError(error.message);
             } finally {
                 loadingDiv.style.display = 'none';
             }
@@ -423,70 +417,36 @@
             });
         }
 
-        function getMockRestaurants(foodType) {
-            const mockData = {
-                pizza: [
-                    { name: "Pizza Ranch", address: "12516 Elm Creek Blvd N, Maple Grove, MN", rating: 4.2, priceLevel: "$$", distance: "3.2 miles", takeout: true },
-                    { name: "Papa Murphy's", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$", distance: "2.8 miles", takeout: true },
-                    { name: "Domino's Pizza", address: "11471 Fountains Dr, Maple Grove, MN", rating: 3.8, priceLevel: "$", distance: "4.1 miles", takeout: true }
-                ],
-                chinese: [
-                    { name: "Hunan Garden", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles", takeout: true },
-                    { name: "Great Hunan", address: "12920 Elm Creek Blvd N, Maple Grove, MN", rating: 4.1, priceLevel: "$$", distance: "4.2 miles", takeout: true },
-                    { name: "Panda Express", address: "12447 Elm Creek Blvd, Maple Grove, MN", rating: 3.9, priceLevel: "$", distance: "3.1 miles", takeout: true }
-                ],
-                mexican: [
-                    { name: "Chipotle Mexican Grill", address: "12447 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "3.1 miles", takeout: true },
-                    { name: "Qdoba Mexican Eats", address: "7800 Main St N, Maple Grove, MN", rating: 3.9, priceLevel: "$$", distance: "5.8 miles", takeout: true },
-                    { name: "Taco Bell", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 3.7, priceLevel: "$", distance: "3.5 miles", takeout: true }
-                ],
-                italian: [
-                    { name: "Buca di Beppo", address: "7711 Mitchell Rd, Eden Prairie, MN", rating: 4.1, priceLevel: "$$", distance: "8.2 miles", takeout: true },
-                    { name: "Olive Garden", address: "12516 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "3.2 miles", takeout: true },
-                    { name: "Carbone's Pizzeria", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "2.9 miles", takeout: true }
-                ],
-                american: [
-                    { name: "Five Guys", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles", takeout: true },
-                    { name: "Culver's", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.4, priceLevel: "$$", distance: "2.9 miles", takeout: true },
-                    { name: "Red Robin", address: "7935 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "5.1 miles", takeout: true }
-                ],
-                asian: [
-                    { name: "P.F. Chang's", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.2, priceLevel: "$$$", distance: "3.5 miles", takeout: true },
-                    { name: "Benihana", address: "7600 W 78th St, Bloomington, MN", rating: 4.1, priceLevel: "$$$", distance: "11.2 miles", takeout: true },
-                    { name: "Pei Wei", address: "12920 Elm Creek Blvd, Maple Grove, MN", rating: 3.9, priceLevel: "$$", distance: "4.2 miles", takeout: true }
-                ],
-                sandwich: [
-                    { name: "Jimmy John's", address: "12447 Elm Creek Blvd, Maple Grove, MN", rating: 4.1, priceLevel: "$", distance: "3.1 miles", takeout: true },
-                    { name: "Subway", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 3.8, priceLevel: "$", distance: "2.8 miles", takeout: true },
-                    { name: "Firehouse Subs", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.2, priceLevel: "$$", distance: "3.5 miles", takeout: true }
-                ],
-                indian: [
-                    { name: "Taste of India", address: "7515 Main St N, Maple Grove, MN", rating: 4.4, priceLevel: "$$", distance: "6.1 miles", takeout: true },
-                    { name: "India Palace", address: "8505 Edinburgh Center Dr, Brooklyn Park, MN", rating: 4.2, priceLevel: "$$", distance: "7.3 miles", takeout: true },
-                    { name: "Tandoor", address: "8371 Highway 7, St Louis Park, MN", rating: 4.3, priceLevel: "$$", distance: "9.8 miles", takeout: true }
-                ],
-                thai: [
-                    { name: "Thai Basil", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles", takeout: true },
-                    { name: "Sawatdee", address: "7885 Main St N, Maple Grove, MN", rating: 4.1, priceLevel: "$$", distance: "5.9 miles", takeout: true },
-                    { name: "Thai Garden", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "2.8 miles", takeout: true }
-                ],
-                mediterranean: [
-                    { name: "Naf Naf Grill", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.2, priceLevel: "$$", distance: "3.5 miles", takeout: true },
-                    { name: "Crave", address: "12920 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$$", distance: "4.2 miles", takeout: true },
-                    { name: "Mediterranean Cruise Cafe", address: "7515 Main St N, Maple Grove, MN", rating: 4.4, priceLevel: "$$", distance: "6.1 miles", takeout: true }
-                ],
-                japanese: [
-                    { name: "Kobe Japanese Steakhouse", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.2, priceLevel: "$$$", distance: "3.5 miles", takeout: true },
-                    { name: "Osaka Sushi & Hibachi", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.1, priceLevel: "$$", distance: "2.9 miles", takeout: true },
-                    { name: "Masu Sushi", address: "7711 Mitchell Rd, Eden Prairie, MN", rating: 4.4, priceLevel: "$$$", distance: "8.2 miles", takeout: true }
-                ],
-                bbq: [
-                    { name: "Famous Dave's", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "3.5 miles", takeout: true },
-                    { name: "Dickey's Barbecue Pit", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 3.9, priceLevel: "$$", distance: "2.8 miles", takeout: true },
-                    { name: "Smoke in the Pit", address: "7515 Main St N, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "6.1 miles", takeout: true }
-                ]
-            };
-            return mockData[foodType] || [];
+        function displayNoResults(foodType) {
+            restaurantsList.innerHTML = `
+                <div class="no-results">
+                    <h3>😔 No ${capitalizeFirst(foodType)} Restaurants Found</h3>
+                    <p>We couldn't find any ${foodType} restaurants within 15 miles of your location using OpenStreetMap data.</p>
+                    <p><strong>Suggestions:</strong></p>
+                    <ul>
+                        <li>Try selecting a different cuisine type</li>
+                        <li>Check if the team voted for other food types</li>
+                        <li>Use Google Maps or Yelp to search manually</li>
+                    </ul>
+                    <button class="btn btn-secondary" onclick="location.reload()">Start Over</button>
+                </div>
+            `;
+        }
+
+        function displayError(errorMessage) {
+            restaurantsList.innerHTML = `
+                <div class="error-message">
+                    <h3>⚠️ Error Loading Restaurants</h3>
+                    <p>There was a problem searching for restaurants: ${errorMessage}</p>
+                    <p><strong>What you can do:</strong></p>
+                    <ul>
+                        <li>Check your internet connection</li>
+                        <li>Try again in a few moments</li>
+                        <li>If the problem persists, use Google Maps or Yelp to search manually</li>
+                    </ul>
+                    <button class="btn btn-secondary" onclick="window.location.reload()">Try Again</button>
+                </div>
+            `;
         }
 
         function displayRestaurants(restaurants, foodType) {

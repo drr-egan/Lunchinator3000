@@ -395,3 +395,42 @@ h3 {
         padding: 20px;
     }
 }
+
+/* No Results / Error Messages */
+.no-results, .error-message {
+    text-align: center;
+    padding: 40px 20px;
+    background: #1e1e2f;
+    border-radius: 12px;
+    border: 2px solid #2a2a3e;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.no-results h3, .error-message h3 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.no-results p, .error-message p {
+    color: #b8b8d1;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.no-results ul, .error-message ul {
+    text-align: left;
+    max-width: 400px;
+    margin: 20px auto;
+    color: #e0e0e0;
+}
+
+.no-results li, .error-message li {
+    margin-bottom: 10px;
+    padding-left: 10px;
+}
+
+.no-results button, .error-message button {
+    margin-top: 20px;
+}
