@@ -39,6 +39,12 @@ header h1 {
     color: #b8b8d1;
 }
 
+.btn-top-nav {
+    margin-top: 15px;
+    font-size: 1rem;
+    padding: 12px 24px;
+}
+
 .section {
     display: none;
     background: #1e1e2f;
@@ -433,4 +439,30 @@ h3 {
 
 .no-results button, .error-message button {
     margin-top: 20px;
+}
+
+/* Tie-Breaker Message */
+.tie-breaker-message {
+    background: linear-gradient(135deg, #2a2a3e 0%, #1e1e2f 100%);
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.tie-breaker-message h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.6rem;
+}
+
+.tie-breaker-message p {
+    color: #b8b8d1;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.tie-breaker-message strong {
+    color: #e0e0e0;
 }

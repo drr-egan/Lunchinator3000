@@ -11,6 +11,9 @@
         <header>
             <h1>🍽️ Lunchinator 3000</h1>
             <p class="subtitle">What does the team want for lunch today?</p>
+            <button id="view-results-top" class="btn btn-secondary btn-top-nav" style="display: none;">
+                📊 View Team Results
+            </button>
         </header>
 
         <!-- Step 1: Collect Team Preferences -->
@@ -153,6 +156,7 @@
         const restaurantsList = document.getElementById('restaurants-list');
         const backToPreferencesBtn = document.getElementById('back-to-preferences');
         const loadingDiv = document.getElementById('loading');
+        const viewResultsTopBtn = document.getElementById('view-results-top');
 
         // Initialize
         console.log('App initializing...');
@@ -166,6 +170,7 @@
             findRestaurantsBtn.addEventListener('click', searchRestaurants);
             resetPreferencesBtn.addEventListener('click', resetPreferences);
             backToPreferencesBtn.addEventListener('click', () => showSection('results'));
+            viewResultsTopBtn.addEventListener('click', () => showSection('results'));
         }
 
         function showSection(section) {
@@ -254,6 +259,13 @@
                 querySnapshot.forEach((doc) => {
                     currentPreferences.push({ id: doc.id, ...doc.data() });
                 });
+
+                // Show/hide the top "View Results" button
+                if (currentPreferences.length > 0) {
+                    viewResultsTopBtn.style.display = 'inline-block';
+                } else {
+                    viewResultsTopBtn.style.display = 'none';
+                }
 
                 displayPreferences();
             } catch (error) {
@@ -373,30 +385,47 @@
             currentPreferences.forEach(pref => {
                 foodTypeCounts[pref.foodType] = (foodTypeCounts[pref.foodType] || 0) + 1;
             });
-            const mostPopularType = Object.entries(foodTypeCounts).sort((a, b) => b[1] - a[1])[0][0];
+
+            // Check for ties
+            const sortedVotes = Object.entries(foodTypeCounts).sort((a, b) => b[1] - a[1]);
+            const maxVotes = sortedVotes[0][1];
+            const tiedTypes = sortedVotes.filter(([_, count]) => count === maxVotes).map(([type, _]) => type);
+
+            const isTie = tiedTypes.length > 1;
+            const searchTypes = isTie ? tiedTypes : [sortedVotes[0][0]];
 
             try {
                 // Call Cloud Function to get real restaurant data (100% free using OpenStreetMap)
                 // Pass all preferences for AI-powered matching
                 const searchRestaurantsFunc = httpsCallable(functions, 'searchRestaurants');
-                const result = await searchRestaurantsFunc({
-                    foodType: mostPopularType,
-                    lat: DEFAULT_LOCATION.lat,
-                    lng: DEFAULT_LOCATION.lng,
-                    radius: DEFAULT_LOCATION.radius,
-                    preferences: currentPreferences
-                });
+
+                // If tie, search all tied types and combine results
+                let allRestaurants = [];
+                for (const foodType of searchTypes) {
+                    const result = await searchRestaurantsFunc({
+                        foodType: foodType,
+                        lat: DEFAULT_LOCATION.lat,
+                        lng: DEFAULT_LOCATION.lng,
+                        radius: DEFAULT_LOCATION.radius,
+                        preferences: currentPreferences
+                    });
+                    if (result.data.restaurants) {
+                        allRestaurants = allRestaurants.concat(result.data.restaurants);
+                    }
+                }
+
+                const result = { data: { restaurants: allRestaurants } };
 
                 let restaurants = result.data.restaurants;
 
                 if (restaurants && restaurants.length > 0) {
                     // Sort restaurants by distance (nearest to farthest)
                     restaurants = sortRestaurantsByDistance(restaurants);
-                    displayRestaurants(restaurants, mostPopularType);
+                    displayRestaurants(restaurants, isTie, tiedTypes);
                 } else {
                     // No restaurants found
                     console.log('No restaurants found');
-                    displayNoResults(mostPopularType);
+                    displayNoResults(searchTypes.join(', '));
                 }
             } catch (error) {
                 console.error('Error searching restaurants:', error);
@@ -447,8 +476,22 @@
             `;
         }
 
-        function displayRestaurants(restaurants, foodType) {
-            let html = `<h3>🍽️ ${capitalizeFirst(foodType)} Restaurants Near You</h3>`;
+        function displayRestaurants(restaurants, isTie, tiedTypes) {
+            let html = '';
+
+            if (isTie && tiedTypes) {
+                const tiedNames = tiedTypes.map(t => capitalizeFirst(t)).join(', ');
+                html += `
+                    <div class="tie-breaker-message">
+                        <h3>🤝 Tie Detected: ${tiedNames}</h3>
+                        <p>We searched all tied options and used AI to find the best compromise based on everyone's preferences.</p>
+                        <p><strong>Showing top matches ranked by team preferences:</strong></p>
+                    </div>
+                `;
+            } else {
+                html += `<h3>🍽️ Top Recommended Restaurants</h3>`;
+            }
+
             html += '<div class="restaurants-grid">';
             restaurants.forEach(restaurant => {
                 html += `
