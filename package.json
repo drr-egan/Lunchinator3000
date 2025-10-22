@@ -1,0 +1,16 @@
+{
+  "name": "lunchinator3000",
+  "version": "1.0.0",
+  "description": "Team lunch ordering app with Firestore",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server -p 8080",
+    "start": "npx http-server -p 8080"
+  },
+  "dependencies": {
+    "firebase": "^10.7.1"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
