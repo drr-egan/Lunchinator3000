@@ -15,14 +15,14 @@
 
         <!-- Step 1: Collect Team Preferences -->
         <section id="preferences-section" class="section active">
-            <h2>Step 1: Enter Your Lunch Preferences</h2>
+            <h2>Let's Find Your Perfect Lunch!</h2>
             <div class="form-group">
-                <label for="name">Your Name:</label>
+                <label for="name">What's your name?</label>
                 <input type="text" id="name" placeholder="Enter your name" required>
             </div>
 
             <div class="form-group">
-                <label for="food-type">What type of food do you want?</label>
+                <label for="food-type">What type of food sounds good to you today?</label>
                 <select id="food-type">
                     <option value="">-- Select Food Type --</option>
                     <option value="pizza">Pizza</option>
@@ -41,11 +41,31 @@
             </div>
 
             <div class="form-group">
-                <label for="dietary-notes">Dietary Restrictions/Notes (optional):</label>
-                <input type="text" id="dietary-notes" placeholder="e.g., vegetarian, gluten-free, no nuts">
+                <label for="meal-size">How hungry are you?</label>
+                <select id="meal-size">
+                    <option value="">-- Select Hunger Level --</option>
+                    <option value="light">Light - Just a snack or small meal</option>
+                    <option value="medium">Medium - Regular lunch</option>
+                    <option value="hearty">Very Hungry - Large, filling meal</option>
+                </select>
             </div>
 
-            <button id="submit-preference" class="btn btn-primary">Submit My Preference</button>
+            <div class="form-group">
+                <label for="vibe">What kind of dining experience are you in the mood for?</label>
+                <select id="vibe">
+                    <option value="">-- Select Vibe --</option>
+                    <option value="quick">Quick & Easy - Fast food or pickup</option>
+                    <option value="casual">Casual - Relaxed dining</option>
+                    <option value="quality">Quality - Worth the wait</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="specific-craving">Any specific cravings or must-haves? (optional)</label>
+                <input type="text" id="specific-craving" placeholder="e.g., extra spicy, lots of veggies, comfort food">
+            </div>
+
+            <button id="submit-preference" class="btn btn-primary">Submit My Preferences</button>
         </section>
 
         <!-- Step 2: View Team Preferences -->

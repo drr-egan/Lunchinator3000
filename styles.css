@@ -187,9 +187,20 @@ h3 {
     font-weight: 600;
 }
 
-.dietary-notes {
+.preference-detail {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    color: #666;
+}
+
+.craving {
     font-size: 0.9rem;
     font-style: italic;
+    margin-top: 10px;
+    padding: 8px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    color: #667eea;
 }
 
 .summary {

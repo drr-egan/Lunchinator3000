@@ -21,7 +21,9 @@ const ordersSection = document.getElementById('orders-section');
 
 const nameInput = document.getElementById('name');
 const foodTypeSelect = document.getElementById('food-type');
-const dietaryNotesInput = document.getElementById('dietary-notes');
+const mealSizeSelect = document.getElementById('meal-size');
+const vibeSelect = document.getElementById('vibe');
+const specificCravingInput = document.getElementById('specific-craving');
 const submitPreferenceBtn = document.getElementById('submit-preference');
 const preferencesList = document.getElementById('preferences-list');
 const findRestaurantsBtn = document.getElementById('find-restaurants');
@@ -67,38 +69,61 @@ function showSection(section) {
 
 // Submit preference to Firestore
 async function submitPreference() {
+    console.log('Submit button clicked!');
+
     const name = nameInput.value.trim();
     const foodType = foodTypeSelect.value;
-    const dietaryNotes = dietaryNotesInput.value.trim();
+    const mealSize = mealSizeSelect.value;
+    const vibe = vibeSelect.value;
+    const specificCraving = specificCravingInput.value.trim();
+
+    console.log('Form values:', { name, foodType, mealSize, vibe, specificCraving });
 
     if (!name) {
-        alert('Please enter your name');
+        alert('Please tell us your name!');
         return;
     }
 
     if (!foodType) {
-        alert('Please select a food type');
+        alert('Please select what type of food sounds good to you!');
+        return;
+    }
+
+    if (!mealSize) {
+        alert('Please tell us how hungry you are!');
+        return;
+    }
+
+    if (!vibe) {
+        alert('Please select what kind of dining experience you want!');
         return;
     }
 
     try {
+        console.log('Attempting to save to Firestore...');
         await addDoc(collection(db, PREFERENCES_COLLECTION), {
             name,
             foodType,
-            dietaryNotes,
+            mealSize,
+            vibe,
+            specificCraving,
             timestamp: new Date()
         });
+
+        console.log('Successfully saved to Firestore!');
 
         // Clear form
         nameInput.value = '';
         foodTypeSelect.value = '';
-        dietaryNotesInput.value = '';
+        mealSizeSelect.value = '';
+        vibeSelect.value = '';
+        specificCravingInput.value = '';
 
         // Show results
         showSection('results');
     } catch (error) {
         console.error('Error adding preference:', error);
-        alert('Error saving preference. Please try again.');
+        alert(`Error saving preference: ${error.message}`);
     }
 }
 
@@ -150,7 +175,9 @@ function displayPreferences() {
                 </div>
                 <div class="preference-body">
                     <p class="food-type">🍴 ${capitalizeFirst(pref.foodType)}</p>
-                    ${pref.dietaryNotes ? `<p class="dietary-notes">📝 ${pref.dietaryNotes}</p>` : ''}
+                    <p class="preference-detail">🍽️ ${capitalizeFirst(pref.mealSize)} meal</p>
+                    <p class="preference-detail">✨ ${capitalizeFirst(pref.vibe)}</p>
+                    ${pref.specificCraving ? `<p class="craving">💭 "${pref.specificCraving}"</p>` : ''}
                 </div>
             </div>
         `;
