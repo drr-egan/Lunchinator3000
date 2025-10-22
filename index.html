@@ -95,6 +95,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -111,6 +112,7 @@
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
+        const functions = getFunctions(app);
 
         // Constants
         const PREFERENCES_COLLECTION = 'lunch_preferences';
@@ -361,11 +363,31 @@
             const mostPopularType = Object.entries(foodTypeCounts).sort((a, b) => b[1] - a[1])[0][0];
 
             try {
-                const restaurants = getMockRestaurants(mostPopularType);
-                displayRestaurants(restaurants, mostPopularType);
+                // Call Cloud Function to get real restaurant data (100% free using OpenStreetMap)
+                const searchRestaurantsFunc = httpsCallable(functions, 'searchRestaurants');
+                const result = await searchRestaurantsFunc({
+                    foodType: mostPopularType,
+                    lat: DEFAULT_LOCATION.lat,
+                    lng: DEFAULT_LOCATION.lng,
+                    radius: DEFAULT_LOCATION.radius
+                });
+
+                const restaurants = result.data.restaurants;
+
+                if (restaurants && restaurants.length > 0) {
+                    displayRestaurants(restaurants, mostPopularType);
+                } else {
+                    // Fallback to mock data if no results
+                    console.log('No real restaurants found, using mock data');
+                    const mockRestaurants = getMockRestaurants(mostPopularType);
+                    displayRestaurants(mockRestaurants, mostPopularType);
+                }
             } catch (error) {
                 console.error('Error searching restaurants:', error);
-                restaurantsList.innerHTML = '<p class="error">Error finding restaurants.</p>';
+                // Fallback to mock data on error
+                console.log('Using mock data due to error');
+                const mockRestaurants = getMockRestaurants(mostPopularType);
+                displayRestaurants(mockRestaurants, mostPopularType);
             } finally {
                 loadingDiv.style.display = 'none';
             }
