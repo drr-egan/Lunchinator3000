@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunchinator 3000 - Team Lunch Ordering</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍽️ Lunchinator 3000</h1>
+            <p class="subtitle">What does the team want for lunch today?</p>
+        </header>
+
+        <!-- Step 1: Collect Team Preferences -->
+        <section id="preferences-section" class="section active">
+            <h2>Let's Find Your Perfect Lunch!</h2>
+            <div class="form-group">
+                <label for="name">What's your name?</label>
+                <input type="text" id="name" placeholder="Enter your name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="food-type">What type of food sounds good to you today?</label>
+                <select id="food-type">
+                    <option value="">-- Select Food Type --</option>
+                    <option value="pizza">Pizza</option>
+                    <option value="chinese">Chinese</option>
+                    <option value="mexican">Mexican</option>
+                    <option value="italian">Italian</option>
+                    <option value="american">American/Burgers</option>
+                    <option value="asian">Asian</option>
+                    <option value="sandwich">Sandwiches/Subs</option>
+                    <option value="indian">Indian</option>
+                    <option value="thai">Thai</option>
+                    <option value="mediterranean">Mediterranean</option>
+                    <option value="japanese">Japanese</option>
+                    <option value="bbq">BBQ</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="meal-size">How hungry are you?</label>
+                <select id="meal-size">
+                    <option value="">-- Select Hunger Level --</option>
+                    <option value="light">Light - Just a snack or small meal</option>
+                    <option value="medium">Medium - Regular lunch</option>
+                    <option value="hearty">Very Hungry - Large, filling meal</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="vibe">What kind of dining experience are you in the mood for?</label>
+                <select id="vibe">
+                    <option value="">-- Select Vibe --</option>
+                    <option value="quick">Quick & Easy - Fast food or pickup</option>
+                    <option value="casual">Casual - Relaxed dining</option>
+                    <option value="quality">Quality - Worth the wait</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="specific-craving">Any specific cravings or must-haves? (optional)</label>
+                <input type="text" id="specific-craving" placeholder="e.g., extra spicy, lots of veggies, comfort food">
+            </div>
+
+            <button id="submit-preference" class="btn btn-primary">Submit My Preferences</button>
+        </section>
+
+        <!-- Step 2: View Team Preferences -->
+        <section id="results-section" class="section">
+            <h2>Team Preferences</h2>
+            <div id="preferences-list" class="preferences-list"></div>
+
+            <div class="actions">
+                <button id="find-restaurants" class="btn btn-primary">Find Nearby Restaurants</button>
+                <button id="reset-preferences" class="btn btn-secondary">Clear All & Start Over</button>
+            </div>
+        </section>
+
+        <!-- Step 3: Restaurant Results -->
+        <section id="restaurants-section" class="section">
+            <h2>Nearby Restaurants (within 15 miles)</h2>
+            <div id="loading" class="loading" style="display: none;">
+                <p>🔍 Finding restaurants near Champlin, MN...</p>
+            </div>
+            <div id="restaurants-list" class="restaurants-list"></div>
+            <button id="back-to-preferences" class="btn btn-secondary">Back to Preferences</button>
+        </section>
+
+        <!-- Current Orders Display -->
+        <section id="orders-section" class="section">
+            <h2>Selected Restaurant & Orders</h2>
+            <div id="selected-restaurant" class="selected-restaurant"></div>
+            <div id="orders-list" class="orders-list"></div>
+        </section>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

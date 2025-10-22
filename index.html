@@ -88,15 +88,320 @@
             <div id="restaurants-list" class="restaurants-list"></div>
             <button id="back-to-preferences" class="btn btn-secondary">Back to Preferences</button>
         </section>
-
-        <!-- Current Orders Display -->
-        <section id="orders-section" class="section">
-            <h2>Selected Restaurant & Orders</h2>
-            <div id="selected-restaurant" class="selected-restaurant"></div>
-            <div id="orders-list" class="orders-list"></div>
-        </section>
     </div>
 
-    <script type="module" src="app.js"></script>
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyA5l83Pwi_WDmWwJURvLEzn7FIDU1oxYu4",
+          authDomain: "lunchinator3000.firebaseapp.com",
+          projectId: "lunchinator3000",
+          storageBucket: "lunchinator3000.firebasestorage.app",
+          messagingSenderId: "919461112233",
+          appId: "1:919461112233:web:613b22dc46767931adfcb8",
+          measurementId: "G-VBJR219C8B"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        // Constants
+        const PREFERENCES_COLLECTION = 'lunch_preferences';
+        const ORDERS_COLLECTION = 'lunch_orders';
+        const GOOGLE_PLACES_API_KEY = "AIzaSyCNq6Xtlr1kvPXl20qlu0p1ND9bjiP5eRA";
+        const DEFAULT_LOCATION = {
+          lat: 45.1589,
+          lng: -93.3954,
+          address: "11611 Business Park Blvd N, Champlin, MN 55316",
+          radius: 24140
+        };
+
+        // State
+        let currentPreferences = [];
+
+        // DOM Elements
+        const preferencesSection = document.getElementById('preferences-section');
+        const resultsSection = document.getElementById('results-section');
+        const restaurantsSection = document.getElementById('restaurants-section');
+        const nameInput = document.getElementById('name');
+        const foodTypeSelect = document.getElementById('food-type');
+        const mealSizeSelect = document.getElementById('meal-size');
+        const vibeSelect = document.getElementById('vibe');
+        const specificCravingInput = document.getElementById('specific-craving');
+        const submitPreferenceBtn = document.getElementById('submit-preference');
+        const preferencesList = document.getElementById('preferences-list');
+        const findRestaurantsBtn = document.getElementById('find-restaurants');
+        const resetPreferencesBtn = document.getElementById('reset-preferences');
+        const restaurantsList = document.getElementById('restaurants-list');
+        const backToPreferencesBtn = document.getElementById('back-to-preferences');
+        const loadingDiv = document.getElementById('loading');
+
+        // Initialize
+        console.log('App initializing...');
+        setupEventListeners();
+        loadPreferences();
+        showSection('preferences');
+        console.log('App initialized successfully!');
+
+        function setupEventListeners() {
+            submitPreferenceBtn.addEventListener('click', submitPreference);
+            findRestaurantsBtn.addEventListener('click', searchRestaurants);
+            resetPreferencesBtn.addEventListener('click', resetPreferences);
+            backToPreferencesBtn.addEventListener('click', () => showSection('results'));
+        }
+
+        function showSection(section) {
+            preferencesSection.classList.remove('active');
+            resultsSection.classList.remove('active');
+            restaurantsSection.classList.remove('active');
+
+            switch(section) {
+                case 'preferences':
+                    preferencesSection.classList.add('active');
+                    break;
+                case 'results':
+                    resultsSection.classList.add('active');
+                    loadPreferences();
+                    break;
+                case 'restaurants':
+                    restaurantsSection.classList.add('active');
+                    break;
+            }
+        }
+
+        async function submitPreference() {
+            console.log('Submit button clicked!');
+
+            const name = nameInput.value.trim();
+            const foodType = foodTypeSelect.value;
+            const mealSize = mealSizeSelect.value;
+            const vibe = vibeSelect.value;
+            const specificCraving = specificCravingInput.value.trim();
+
+            console.log('Form values:', { name, foodType, mealSize, vibe, specificCraving });
+
+            if (!name) {
+                alert('Please tell us your name!');
+                return;
+            }
+            if (!foodType) {
+                alert('Please select what type of food sounds good to you!');
+                return;
+            }
+            if (!mealSize) {
+                alert('Please tell us how hungry you are!');
+                return;
+            }
+            if (!vibe) {
+                alert('Please select what kind of dining experience you want!');
+                return;
+            }
+
+            try {
+                console.log('Attempting to save to Firestore...');
+                await addDoc(collection(db, PREFERENCES_COLLECTION), {
+                    name,
+                    foodType,
+                    mealSize,
+                    vibe,
+                    specificCraving,
+                    timestamp: new Date()
+                });
+
+                console.log('Successfully saved to Firestore!');
+
+                nameInput.value = '';
+                foodTypeSelect.value = '';
+                mealSizeSelect.value = '';
+                vibeSelect.value = '';
+                specificCravingInput.value = '';
+
+                showSection('results');
+            } catch (error) {
+                console.error('Error adding preference:', error);
+                alert(`Error saving preference: ${error.message}`);
+            }
+        }
+
+        async function loadPreferences() {
+            try {
+                const q = query(collection(db, PREFERENCES_COLLECTION), orderBy('timestamp', 'desc'));
+                const querySnapshot = await getDocs(q);
+
+                currentPreferences = [];
+                querySnapshot.forEach((doc) => {
+                    currentPreferences.push({ id: doc.id, ...doc.data() });
+                });
+
+                displayPreferences();
+            } catch (error) {
+                console.error('Error loading preferences:', error);
+            }
+        }
+
+        function displayPreferences() {
+            if (currentPreferences.length === 0) {
+                preferencesList.innerHTML = '<p class="empty-state">No preferences yet. Be the first to add yours!</p>';
+                return;
+            }
+
+            const foodTypeCounts = {};
+            currentPreferences.forEach(pref => {
+                foodTypeCounts[pref.foodType] = (foodTypeCounts[pref.foodType] || 0) + 1;
+            });
+
+            const mostPopular = Object.entries(foodTypeCounts).sort((a, b) => b[1] - a[1])[0];
+
+            let html = '<div class="summary">';
+            html += `<h3>📊 Most Popular: ${capitalizeFirst(mostPopular[0])} (${mostPopular[1]} votes)</h3>`;
+            html += '</div>';
+
+            html += '<div class="preferences-grid">';
+            currentPreferences.forEach(pref => {
+                html += `
+                    <div class="preference-card">
+                        <div class="preference-header">
+                            <strong>${pref.name}</strong>
+                            <button class="btn-delete" onclick="window.deletePreference('${pref.id}')">✕</button>
+                        </div>
+                        <div class="preference-body">
+                            <p class="food-type">🍴 ${capitalizeFirst(pref.foodType)}</p>
+                            <p class="preference-detail">🍽️ ${capitalizeFirst(pref.mealSize)} meal</p>
+                            <p class="preference-detail">✨ ${capitalizeFirst(pref.vibe)}</p>
+                            ${pref.specificCraving ? `<p class="craving">💭 "${pref.specificCraving}"</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            preferencesList.innerHTML = html;
+        }
+
+        window.deletePreference = async function(id) {
+            if (!confirm('Remove this preference?')) return;
+            try {
+                await deleteDoc(doc(db, PREFERENCES_COLLECTION, id));
+                loadPreferences();
+            } catch (error) {
+                console.error('Error deleting preference:', error);
+                alert('Error deleting preference.');
+            }
+        };
+
+        async function resetPreferences() {
+            if (!confirm('Clear all preferences and start over?')) return;
+            try {
+                const querySnapshot = await getDocs(collection(db, PREFERENCES_COLLECTION));
+                const deletePromises = [];
+                querySnapshot.forEach((document) => {
+                    deletePromises.push(deleteDoc(doc(db, PREFERENCES_COLLECTION, document.id)));
+                });
+                await Promise.all(deletePromises);
+                currentPreferences = [];
+                displayPreferences();
+                showSection('preferences');
+            } catch (error) {
+                console.error('Error resetting preferences:', error);
+                alert('Error clearing preferences.');
+            }
+        }
+
+        async function searchRestaurants() {
+            if (currentPreferences.length === 0) {
+                alert('Add some preferences first!');
+                return;
+            }
+
+            showSection('restaurants');
+            loadingDiv.style.display = 'block';
+            restaurantsList.innerHTML = '';
+
+            const foodTypeCounts = {};
+            currentPreferences.forEach(pref => {
+                foodTypeCounts[pref.foodType] = (foodTypeCounts[pref.foodType] || 0) + 1;
+            });
+            const mostPopularType = Object.entries(foodTypeCounts).sort((a, b) => b[1] - a[1])[0][0];
+
+            try {
+                const restaurants = getMockRestaurants(mostPopularType);
+                displayRestaurants(restaurants, mostPopularType);
+            } catch (error) {
+                console.error('Error searching restaurants:', error);
+                restaurantsList.innerHTML = '<p class="error">Error finding restaurants.</p>';
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        }
+
+        function getMockRestaurants(foodType) {
+            const mockData = {
+                pizza: [
+                    { name: "Pizza Ranch", address: "12516 Elm Creek Blvd N, Maple Grove, MN", rating: 4.2, priceLevel: "$$", distance: "3.2 miles" },
+                    { name: "Papa Murphy's", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$", distance: "2.8 miles" },
+                ],
+                chinese: [
+                    { name: "Hunan Garden", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles" },
+                ],
+                mexican: [
+                    { name: "Chipotle Mexican Grill", address: "12447 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "3.1 miles" },
+                ],
+                american: [
+                    { name: "Five Guys", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles" },
+                ]
+            };
+            return mockData[foodType] || mockData.american;
+        }
+
+        function displayRestaurants(restaurants, foodType) {
+            let html = `<h3>🍽️ ${capitalizeFirst(foodType)} Restaurants Near You</h3>`;
+            html += '<div class="restaurants-grid">';
+            restaurants.forEach(restaurant => {
+                html += `
+                    <div class="restaurant-card">
+                        <h4>${restaurant.name}</h4>
+                        <p class="address">📍 ${restaurant.address}</p>
+                        <p class="distance">📏 ${restaurant.distance}</p>
+                        <div class="restaurant-details">
+                            <span class="rating">⭐ ${restaurant.rating}</span>
+                            <span class="price">${restaurant.priceLevel}</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="window.selectRestaurant('${restaurant.name}', '${restaurant.address}')">
+                            Choose This Restaurant
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            restaurantsList.innerHTML = html;
+        }
+
+        window.selectRestaurant = async function(name, address) {
+            try {
+                await addDoc(collection(db, ORDERS_COLLECTION), {
+                    restaurantName: name,
+                    restaurantAddress: address,
+                    timestamp: new Date(),
+                    preferences: currentPreferences
+                });
+                alert(`Great! The team will order from ${name}`);
+                showSection('results');
+            } catch (error) {
+                console.error('Error saving restaurant selection:', error);
+                alert('Error saving selection.');
+            }
+        };
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+    </script>
 </body>
 </html>
