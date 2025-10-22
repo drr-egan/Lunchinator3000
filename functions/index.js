@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 
 // Free OpenStreetMap Overpass API - no API key needed
 exports.searchRestaurants = functions.https.onCall(async (data, context) => {
-  const { foodType, lat, lng, radius } = data;
+  const { foodType, lat, lng, radius, preferences } = data;
 
   // Map food types to OpenStreetMap cuisine tags
   const cuisineMap = {
@@ -68,22 +68,45 @@ exports.searchRestaurants = functions.https.onCall(async (data, context) => {
     // Process and format the results
     const formattedRestaurants = restaurants
       .filter(place => place.tags && place.tags.name)
-      .slice(0, 10)
       .map(place => {
         const tags = place.tags;
         const distance = calculateDistance(lat, lng, place.lat || place.center.lat, place.lon || place.center.lon);
 
-        return {
+        const restaurant = {
           name: tags.name,
           address: formatAddress(tags),
           rating: tags.stars ? parseFloat(tags.stars) : 4.0,
           priceLevel: getPriceLevel(tags),
           distance: `${distance.toFixed(1)} miles`,
+          distanceNum: distance,
           takeout: tags.takeaway === 'yes' || tags.delivery === 'yes' || true,
           cuisine: tags.cuisine || foodType,
           phone: tags.phone || tags['contact:phone'] || '',
-          website: tags.website || tags['contact:website'] || ''
+          website: tags.website || tags['contact:website'] || '',
+          tags: tags
         };
+
+        // Add AI-powered preference matching score
+        if (preferences && preferences.length > 0) {
+          restaurant.matchScore = calculateMatchScore(restaurant, preferences);
+        }
+
+        return restaurant;
+      })
+      .sort((a, b) => {
+        // Sort by match score first (if available), then by distance
+        if (a.matchScore && b.matchScore && a.matchScore !== b.matchScore) {
+          return b.matchScore - a.matchScore;
+        }
+        return a.distanceNum - b.distanceNum;
+      })
+      .slice(0, 10)
+      .map(r => {
+        // Remove temporary fields before returning
+        delete r.distanceNum;
+        delete r.tags;
+        delete r.matchScore;
+        return r;
       });
 
     return { restaurants: formattedRestaurants };
@@ -143,4 +166,103 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 function toRad(degrees) {
   return degrees * (Math.PI / 180);
+}
+
+// AI-powered preference matching algorithm
+function calculateMatchScore(restaurant, preferences) {
+  let score = 0;
+  let totalWeight = 0;
+
+  // Analyze team preferences
+  const hungerLevels = {};
+  const flavorPreferences = {};
+  const moods = {};
+
+  preferences.forEach(pref => {
+    hungerLevels[pref.hungerLevel] = (hungerLevels[pref.hungerLevel] || 0) + 1;
+    flavorPreferences[pref.flavorPreference] = (flavorPreferences[pref.flavorPreference] || 0) + 1;
+    moods[pref.mood] = (moods[pref.mood] || 0) + 1;
+  });
+
+  const teamSize = preferences.length;
+
+  // Score based on hunger level (affects restaurant type)
+  const dominantHunger = Object.keys(hungerLevels).reduce((a, b) =>
+    hungerLevels[a] > hungerLevels[b] ? a : b
+  );
+
+  if (dominantHunger === 'very-hungry') {
+    // Prefer places known for large portions
+    if (restaurant.tags.cuisine && ['american', 'bbq', 'pizza', 'italian'].includes(restaurant.tags.cuisine)) {
+      score += 3;
+    }
+  } else if (dominantHunger === 'light') {
+    // Prefer lighter options
+    if (restaurant.tags.cuisine && ['japanese', 'mediterranean', 'sandwich', 'asian'].includes(restaurant.tags.cuisine)) {
+      score += 3;
+    }
+  }
+  totalWeight += 3;
+
+  // Score based on flavor preferences
+  const dominantFlavor = Object.keys(flavorPreferences).reduce((a, b) =>
+    flavorPreferences[a] > flavorPreferences[b] ? a : b
+  );
+
+  if (dominantFlavor === 'spicy') {
+    if (restaurant.tags.cuisine && ['thai', 'indian', 'mexican', 'chinese'].includes(restaurant.tags.cuisine)) {
+      score += 5;
+    }
+  } else if (dominantFlavor === 'fresh') {
+    if (restaurant.tags.cuisine && ['mediterranean', 'japanese', 'sandwich'].includes(restaurant.tags.cuisine)) {
+      score += 5;
+    }
+  } else if (dominantFlavor === 'savory') {
+    if (restaurant.tags.cuisine && ['bbq', 'american', 'italian'].includes(restaurant.tags.cuisine)) {
+      score += 5;
+    }
+  } else if (dominantFlavor === 'sweet-savory') {
+    if (restaurant.tags.cuisine && ['chinese', 'asian', 'thai'].includes(restaurant.tags.cuisine)) {
+      score += 5;
+    }
+  }
+  totalWeight += 5;
+
+  // Score based on mood/occasion
+  const dominantMood = Object.keys(moods).reduce((a, b) =>
+    moods[a] > moods[b] ? a : b
+  );
+
+  if (dominantMood === 'comfort') {
+    if (restaurant.tags.cuisine && ['pizza', 'italian', 'american'].includes(restaurant.tags.cuisine)) {
+      score += 4;
+    }
+  } else if (dominantMood === 'healthy') {
+    if (restaurant.tags.cuisine && ['mediterranean', 'japanese', 'sandwich'].includes(restaurant.tags.cuisine)) {
+      score += 4;
+    }
+  } else if (dominantMood === 'indulgent') {
+    if (restaurant.tags.cuisine && ['bbq', 'american', 'italian'].includes(restaurant.tags.cuisine)) {
+      score += 4;
+    }
+  } else if (dominantMood === 'adventurous') {
+    if (restaurant.tags.cuisine && ['thai', 'indian', 'japanese', 'asian'].includes(restaurant.tags.cuisine)) {
+      score += 4;
+    }
+  } else if (dominantMood === 'team') {
+    // Prefer places good for groups (typically those with variety)
+    if (restaurant.tags.cuisine && ['american', 'italian', 'chinese', 'pizza'].includes(restaurant.tags.cuisine)) {
+      score += 4;
+    }
+  }
+  totalWeight += 4;
+
+  // Bonus for high ratings
+  if (restaurant.rating >= 4.2) {
+    score += 2;
+    totalWeight += 2;
+  }
+
+  // Normalize score to 0-100
+  return totalWeight > 0 ? (score / totalWeight) * 100 : 50;
 }

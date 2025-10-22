@@ -15,57 +15,68 @@
 
         <!-- Step 1: Collect Team Preferences -->
         <section id="preferences-section" class="section active">
-            <h2>Let's Find Your Perfect Lunch!</h2>
+            <h2>🤖 AI-Powered Lunch Finder</h2>
+            <p class="ai-subtitle">Answer 5 questions and let AI find your perfect restaurant</p>
+
             <div class="form-group">
-                <label for="name">What's your name?</label>
+                <label for="name">1. What's your name?</label>
                 <input type="text" id="name" placeholder="Enter your name" required>
             </div>
 
             <div class="form-group">
-                <label for="food-type">What type of food sounds good to you today?</label>
+                <label for="food-type">2. What cuisine are you craving?</label>
                 <select id="food-type">
-                    <option value="">-- Select Food Type --</option>
+                    <option value="">-- Select Cuisine --</option>
                     <option value="pizza">Pizza</option>
                     <option value="chinese">Chinese</option>
                     <option value="mexican">Mexican</option>
                     <option value="italian">Italian</option>
                     <option value="american">American/Burgers</option>
-                    <option value="asian">Asian</option>
+                    <option value="asian">Asian Fusion</option>
                     <option value="sandwich">Sandwiches/Subs</option>
                     <option value="indian">Indian</option>
                     <option value="thai">Thai</option>
                     <option value="mediterranean">Mediterranean</option>
-                    <option value="japanese">Japanese</option>
+                    <option value="japanese">Japanese/Sushi</option>
                     <option value="bbq">BBQ</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="meal-size">How hungry are you?</label>
-                <select id="meal-size">
+                <label for="hunger-level">3. How hungry are you?</label>
+                <select id="hunger-level">
                     <option value="">-- Select Hunger Level --</option>
-                    <option value="light">Light - Just a snack or small meal</option>
-                    <option value="medium">Medium - Regular lunch</option>
-                    <option value="hearty">Very Hungry - Large, filling meal</option>
+                    <option value="light">Light - Small meal or snack</option>
+                    <option value="moderate">Moderate - Regular meal</option>
+                    <option value="very-hungry">Very Hungry - Large portions</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="vibe">What kind of dining experience are you in the mood for?</label>
-                <select id="vibe">
-                    <option value="">-- Select Vibe --</option>
-                    <option value="quick">Quick & Easy - Fast food or pickup</option>
-                    <option value="casual">Casual - Relaxed dining</option>
-                    <option value="quality">Quality - Worth the wait</option>
+                <label for="flavor-preference">4. What flavors are you craving?</label>
+                <select id="flavor-preference">
+                    <option value="">-- Select Flavor --</option>
+                    <option value="spicy">Spicy - Bring the heat!</option>
+                    <option value="savory">Savory - Rich and hearty</option>
+                    <option value="fresh">Fresh - Light and crisp</option>
+                    <option value="sweet-savory">Sweet & Savory - Best of both</option>
+                    <option value="mild">Mild - Keep it simple</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="specific-craving">Any specific cravings or must-haves? (optional)</label>
-                <input type="text" id="specific-craving" placeholder="e.g., extra spicy, lots of veggies, comfort food">
+                <label for="mood">5. What's your mood/occasion?</label>
+                <select id="mood">
+                    <option value="">-- Select Mood --</option>
+                    <option value="comfort">Comfort food - Something familiar and satisfying</option>
+                    <option value="healthy">Healthy - Fresh and nutritious</option>
+                    <option value="indulgent">Indulgent - Treat yourself, go big</option>
+                    <option value="adventurous">Adventurous - Try something new</option>
+                    <option value="team">Team meal - Good for groups</option>
+                </select>
             </div>
 
-            <button id="submit-preference" class="btn btn-primary">Submit My Preferences</button>
+            <button id="submit-preference" class="btn btn-primary">🤖 Find My Perfect Lunch</button>
         </section>
 
         <!-- Step 2: View Team Preferences -->
@@ -134,9 +145,9 @@
         const restaurantsSection = document.getElementById('restaurants-section');
         const nameInput = document.getElementById('name');
         const foodTypeSelect = document.getElementById('food-type');
-        const mealSizeSelect = document.getElementById('meal-size');
-        const vibeSelect = document.getElementById('vibe');
-        const specificCravingInput = document.getElementById('specific-craving');
+        const hungerLevelSelect = document.getElementById('hunger-level');
+        const flavorPreferenceSelect = document.getElementById('flavor-preference');
+        const moodSelect = document.getElementById('mood');
         const submitPreferenceBtn = document.getElementById('submit-preference');
         const preferencesList = document.getElementById('preferences-list');
         const findRestaurantsBtn = document.getElementById('find-restaurants');
@@ -183,26 +194,30 @@
 
             const name = nameInput.value.trim();
             const foodType = foodTypeSelect.value;
-            const mealSize = mealSizeSelect.value;
-            const vibe = vibeSelect.value;
-            const specificCraving = specificCravingInput.value.trim();
+            const hungerLevel = hungerLevelSelect.value;
+            const flavorPreference = flavorPreferenceSelect.value;
+            const mood = moodSelect.value;
 
-            console.log('Form values:', { name, foodType, mealSize, vibe, specificCraving });
+            console.log('Form values:', { name, foodType, hungerLevel, flavorPreference, mood });
 
             if (!name) {
                 alert('Please tell us your name!');
                 return;
             }
             if (!foodType) {
-                alert('Please select what type of food sounds good to you!');
+                alert('Please select what cuisine you\'re craving!');
                 return;
             }
-            if (!mealSize) {
+            if (!hungerLevel) {
                 alert('Please tell us how hungry you are!');
                 return;
             }
-            if (!vibe) {
-                alert('Please select what kind of dining experience you want!');
+            if (!flavorPreference) {
+                alert('Please tell us what flavors you\'re craving!');
+                return;
+            }
+            if (!mood) {
+                alert('Please select your mood/occasion!');
                 return;
             }
 
@@ -211,9 +226,9 @@
                 await addDoc(collection(db, PREFERENCES_COLLECTION), {
                     name,
                     foodType,
-                    mealSize,
-                    vibe,
-                    specificCraving,
+                    hungerLevel,
+                    flavorPreference,
+                    mood,
                     timestamp: new Date()
                 });
 
@@ -221,9 +236,9 @@
 
                 nameInput.value = '';
                 foodTypeSelect.value = '';
-                mealSizeSelect.value = '';
-                vibeSelect.value = '';
-                specificCravingInput.value = '';
+                hungerLevelSelect.value = '';
+                flavorPreferenceSelect.value = '';
+                moodSelect.value = '';
 
                 showSection('results');
             } catch (error) {
@@ -305,9 +320,9 @@
                         </div>
                         <div class="preference-body">
                             <p class="food-type">🍴 ${capitalizeFirst(pref.foodType)}</p>
-                            <p class="preference-detail">🍽️ ${capitalizeFirst(pref.mealSize)} meal</p>
-                            <p class="preference-detail">✨ ${capitalizeFirst(pref.vibe)}</p>
-                            ${pref.specificCraving ? `<p class="craving">💭 "${pref.specificCraving}"</p>` : ''}
+                            <p class="preference-detail">🍽️ ${capitalizeFirst(pref.hungerLevel)} hunger</p>
+                            <p class="preference-detail">🌶️ ${capitalizeFirst(pref.flavorPreference)} flavors</p>
+                            <p class="preference-detail">✨ ${capitalizeFirst(pref.mood)}</p>
                         </div>
                     </div>
                 `;
@@ -364,33 +379,48 @@
 
             try {
                 // Call Cloud Function to get real restaurant data (100% free using OpenStreetMap)
+                // Pass all preferences for AI-powered matching
                 const searchRestaurantsFunc = httpsCallable(functions, 'searchRestaurants');
                 const result = await searchRestaurantsFunc({
                     foodType: mostPopularType,
                     lat: DEFAULT_LOCATION.lat,
                     lng: DEFAULT_LOCATION.lng,
-                    radius: DEFAULT_LOCATION.radius
+                    radius: DEFAULT_LOCATION.radius,
+                    preferences: currentPreferences
                 });
 
-                const restaurants = result.data.restaurants;
+                let restaurants = result.data.restaurants;
 
                 if (restaurants && restaurants.length > 0) {
+                    // Sort restaurants by distance (nearest to farthest)
+                    restaurants = sortRestaurantsByDistance(restaurants);
                     displayRestaurants(restaurants, mostPopularType);
                 } else {
                     // Fallback to mock data if no results
                     console.log('No real restaurants found, using mock data');
-                    const mockRestaurants = getMockRestaurants(mostPopularType);
+                    let mockRestaurants = getMockRestaurants(mostPopularType);
+                    mockRestaurants = sortRestaurantsByDistance(mockRestaurants);
                     displayRestaurants(mockRestaurants, mostPopularType);
                 }
             } catch (error) {
                 console.error('Error searching restaurants:', error);
                 // Fallback to mock data on error
                 console.log('Using mock data due to error');
-                const mockRestaurants = getMockRestaurants(mostPopularType);
+                let mockRestaurants = getMockRestaurants(mostPopularType);
+                mockRestaurants = sortRestaurantsByDistance(mockRestaurants);
                 displayRestaurants(mockRestaurants, mostPopularType);
             } finally {
                 loadingDiv.style.display = 'none';
             }
+        }
+
+        function sortRestaurantsByDistance(restaurants) {
+            return restaurants.sort((a, b) => {
+                // Parse distance strings like "3.2 miles" to numbers
+                const distanceA = parseFloat(a.distance);
+                const distanceB = parseFloat(b.distance);
+                return distanceA - distanceB;
+            });
         }
 
         function getMockRestaurants(foodType) {
