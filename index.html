@@ -257,10 +257,40 @@
                 foodTypeCounts[pref.foodType] = (foodTypeCounts[pref.foodType] || 0) + 1;
             });
 
-            const mostPopular = Object.entries(foodTypeCounts).sort((a, b) => b[1] - a[1])[0];
+            const sortedVotes = Object.entries(foodTypeCounts).sort((a, b) => b[1] - a[1]);
+            const maxVotes = sortedVotes[0][1];
+            const winners = sortedVotes.filter(([_, count]) => count === maxVotes);
 
             let html = '<div class="summary">';
-            html += `<h3>📊 Most Popular: ${capitalizeFirst(mostPopular[0])} (${mostPopular[1]} votes)</h3>`;
+
+            // Display winner(s) or tie
+            if (winners.length > 1) {
+                const tiedOptions = winners.map(([type, _]) => capitalizeFirst(type)).join(', ');
+                html += `<h3>🤝 TIE: ${tiedOptions} (${maxVotes} votes each)</h3>`;
+            } else {
+                html += `<h3>🏆 Most Popular: ${capitalizeFirst(winners[0][0])} (${maxVotes} votes)</h3>`;
+            }
+
+            html += '</div>';
+
+            // Add voting graph
+            html += '<div class="voting-graph">';
+            html += '<h3>Voting Breakdown</h3>';
+            const totalVotes = currentPreferences.length;
+            sortedVotes.forEach(([foodType, count]) => {
+                const percentage = ((count / totalVotes) * 100).toFixed(1);
+                html += `
+                    <div class="vote-bar-container">
+                        <div class="vote-label">
+                            <span class="food-name">${capitalizeFirst(foodType)}</span>
+                            <span class="vote-count">${count} vote${count !== 1 ? 's' : ''} (${percentage}%)</span>
+                        </div>
+                        <div class="vote-bar">
+                            <div class="vote-bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
             html += '</div>';
 
             html += '<div class="preferences-grid">';
@@ -344,20 +374,67 @@
         function getMockRestaurants(foodType) {
             const mockData = {
                 pizza: [
-                    { name: "Pizza Ranch", address: "12516 Elm Creek Blvd N, Maple Grove, MN", rating: 4.2, priceLevel: "$$", distance: "3.2 miles" },
-                    { name: "Papa Murphy's", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$", distance: "2.8 miles" },
+                    { name: "Pizza Ranch", address: "12516 Elm Creek Blvd N, Maple Grove, MN", rating: 4.2, priceLevel: "$$", distance: "3.2 miles", takeout: true },
+                    { name: "Papa Murphy's", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$", distance: "2.8 miles", takeout: true },
+                    { name: "Domino's Pizza", address: "11471 Fountains Dr, Maple Grove, MN", rating: 3.8, priceLevel: "$", distance: "4.1 miles", takeout: true }
                 ],
                 chinese: [
-                    { name: "Hunan Garden", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles" },
+                    { name: "Hunan Garden", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles", takeout: true },
+                    { name: "Great Hunan", address: "12920 Elm Creek Blvd N, Maple Grove, MN", rating: 4.1, priceLevel: "$$", distance: "4.2 miles", takeout: true },
+                    { name: "Panda Express", address: "12447 Elm Creek Blvd, Maple Grove, MN", rating: 3.9, priceLevel: "$", distance: "3.1 miles", takeout: true }
                 ],
                 mexican: [
-                    { name: "Chipotle Mexican Grill", address: "12447 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "3.1 miles" },
+                    { name: "Chipotle Mexican Grill", address: "12447 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "3.1 miles", takeout: true },
+                    { name: "Qdoba Mexican Eats", address: "7800 Main St N, Maple Grove, MN", rating: 3.9, priceLevel: "$$", distance: "5.8 miles", takeout: true },
+                    { name: "Taco Bell", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 3.7, priceLevel: "$", distance: "3.5 miles", takeout: true }
+                ],
+                italian: [
+                    { name: "Buca di Beppo", address: "7711 Mitchell Rd, Eden Prairie, MN", rating: 4.1, priceLevel: "$$", distance: "8.2 miles", takeout: true },
+                    { name: "Olive Garden", address: "12516 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "3.2 miles", takeout: true },
+                    { name: "Carbone's Pizzeria", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "2.9 miles", takeout: true }
                 ],
                 american: [
-                    { name: "Five Guys", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles" },
+                    { name: "Five Guys", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles", takeout: true },
+                    { name: "Culver's", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.4, priceLevel: "$$", distance: "2.9 miles", takeout: true },
+                    { name: "Red Robin", address: "7935 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "5.1 miles", takeout: true }
+                ],
+                asian: [
+                    { name: "P.F. Chang's", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.2, priceLevel: "$$$", distance: "3.5 miles", takeout: true },
+                    { name: "Benihana", address: "7600 W 78th St, Bloomington, MN", rating: 4.1, priceLevel: "$$$", distance: "11.2 miles", takeout: true },
+                    { name: "Pei Wei", address: "12920 Elm Creek Blvd, Maple Grove, MN", rating: 3.9, priceLevel: "$$", distance: "4.2 miles", takeout: true }
+                ],
+                sandwich: [
+                    { name: "Jimmy John's", address: "12447 Elm Creek Blvd, Maple Grove, MN", rating: 4.1, priceLevel: "$", distance: "3.1 miles", takeout: true },
+                    { name: "Subway", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 3.8, priceLevel: "$", distance: "2.8 miles", takeout: true },
+                    { name: "Firehouse Subs", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.2, priceLevel: "$$", distance: "3.5 miles", takeout: true }
+                ],
+                indian: [
+                    { name: "Taste of India", address: "7515 Main St N, Maple Grove, MN", rating: 4.4, priceLevel: "$$", distance: "6.1 miles", takeout: true },
+                    { name: "India Palace", address: "8505 Edinburgh Center Dr, Brooklyn Park, MN", rating: 4.2, priceLevel: "$$", distance: "7.3 miles", takeout: true },
+                    { name: "Tandoor", address: "8371 Highway 7, St Louis Park, MN", rating: 4.3, priceLevel: "$$", distance: "9.8 miles", takeout: true }
+                ],
+                thai: [
+                    { name: "Thai Basil", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "3.5 miles", takeout: true },
+                    { name: "Sawatdee", address: "7885 Main St N, Maple Grove, MN", rating: 4.1, priceLevel: "$$", distance: "5.9 miles", takeout: true },
+                    { name: "Thai Garden", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "2.8 miles", takeout: true }
+                ],
+                mediterranean: [
+                    { name: "Naf Naf Grill", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.2, priceLevel: "$$", distance: "3.5 miles", takeout: true },
+                    { name: "Crave", address: "12920 Elm Creek Blvd, Maple Grove, MN", rating: 4.3, priceLevel: "$$$", distance: "4.2 miles", takeout: true },
+                    { name: "Mediterranean Cruise Cafe", address: "7515 Main St N, Maple Grove, MN", rating: 4.4, priceLevel: "$$", distance: "6.1 miles", takeout: true }
+                ],
+                japanese: [
+                    { name: "Kobe Japanese Steakhouse", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.2, priceLevel: "$$$", distance: "3.5 miles", takeout: true },
+                    { name: "Osaka Sushi & Hibachi", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 4.1, priceLevel: "$$", distance: "2.9 miles", takeout: true },
+                    { name: "Masu Sushi", address: "7711 Mitchell Rd, Eden Prairie, MN", rating: 4.4, priceLevel: "$$$", distance: "8.2 miles", takeout: true }
+                ],
+                bbq: [
+                    { name: "Famous Dave's", address: "12544 Elm Creek Blvd, Maple Grove, MN", rating: 4.0, priceLevel: "$$", distance: "3.5 miles", takeout: true },
+                    { name: "Dickey's Barbecue Pit", address: "11905 Elm Creek Blvd, Maple Grove, MN", rating: 3.9, priceLevel: "$$", distance: "2.8 miles", takeout: true },
+                    { name: "Smoke in the Pit", address: "7515 Main St N, Maple Grove, MN", rating: 4.3, priceLevel: "$$", distance: "6.1 miles", takeout: true }
                 ]
             };
-            return mockData[foodType] || mockData.american;
+            return mockData[foodType] || [];
         }
 
         function displayRestaurants(restaurants, foodType) {
@@ -372,6 +449,7 @@
                         <div class="restaurant-details">
                             <span class="rating">⭐ ${restaurant.rating}</span>
                             <span class="price">${restaurant.priceLevel}</span>
+                            ${restaurant.takeout ? '<span class="takeout-badge">🥡 Takeout Available</span>' : ''}
                         </div>
                         <button class="btn btn-primary" onclick="window.selectRestaurant('${restaurant.name}', '${restaurant.address}')">
                             Choose This Restaurant
