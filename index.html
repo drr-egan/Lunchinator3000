@@ -319,10 +319,10 @@
                             <button class="btn-delete" onclick="window.deletePreference('${pref.id}')">✕</button>
                         </div>
                         <div class="preference-body">
-                            <p class="food-type">🍴 ${capitalizeFirst(pref.foodType)}</p>
-                            <p class="preference-detail">🍽️ ${capitalizeFirst(pref.hungerLevel)} hunger</p>
-                            <p class="preference-detail">🌶️ ${capitalizeFirst(pref.flavorPreference)} flavors</p>
-                            <p class="preference-detail">✨ ${capitalizeFirst(pref.mood)}</p>
+                            <p class="food-type">🍴 ${capitalizeFirst(pref.foodType || 'unknown')}</p>
+                            <p class="preference-detail">🍽️ ${capitalizeFirst(pref.hungerLevel || pref.mealSize || 'moderate')} hunger</p>
+                            <p class="preference-detail">🌶️ ${capitalizeFirst(pref.flavorPreference || 'mild')} flavors</p>
+                            <p class="preference-detail">✨ ${capitalizeFirst(pref.mood || pref.vibe || 'comfort')}</p>
                         </div>
                     </div>
                 `;
@@ -530,6 +530,7 @@
         };
 
         function capitalizeFirst(str) {
+            if (!str) return '';
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
     </script>
