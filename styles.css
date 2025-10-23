@@ -466,3 +466,116 @@ h3 {
 .tie-breaker-message strong {
     color: #e0e0e0;
 }
+
+/* AI Explanation Styles */
+.ai-explanation {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #2a2a3e;
+}
+
+.ai-section {
+    margin-bottom: 15px;
+}
+
+.ai-section h5 {
+    color: #667eea;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-section h6 {
+    color: #764ba2;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.team-consensus {
+    color: #e0e0e0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    padding: 12px;
+    background: #2a2a3e;
+    border-radius: 6px;
+    border-left: 3px solid #667eea;
+}
+
+.expand-btn {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    background: #2a2a3e;
+    color: #b8b8d1;
+    border: 1px solid #3a3a4e;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.expand-btn:hover {
+    background: #3a3a4e;
+    color: #e0e0e0;
+    border-color: #667eea;
+}
+
+.ai-details {
+    display: none;
+    padding: 15px;
+    background: #1a1a2e;
+    border-radius: 6px;
+    margin-top: 10px;
+    border: 1px solid #2a2a3e;
+}
+
+.person-matches {
+    list-style: none;
+    padding: 0;
+}
+
+.person-matches li {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: #2a2a3e;
+    border-radius: 5px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border-left: 3px solid #667eea;
+}
+
+.person-matches li strong {
+    color: #667eea;
+}
+
+.conflicts {
+    background: #2a1f1f;
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 3px solid #ff9800;
+}
+
+.conflicts h6 {
+    color: #ff9800;
+}
+
+.conflicts ul {
+    list-style: none;
+    padding: 0;
+}
+
+.conflicts li {
+    padding: 8px 0;
+    color: #ffd699;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.ai-section p {
+    color: #b8b8d1;
+    line-height: 1.6;
+    font-size: 0.9rem;
+}

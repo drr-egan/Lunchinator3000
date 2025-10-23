@@ -1,5 +1,16 @@
 const functions = require('firebase-functions');
 const fetch = require('node-fetch');
+const { genkit } = require('genkit');
+const { googleAI, gemini15Flash } = require('@genkit-ai/googleai');
+
+// Initialize Genkit with Google AI
+const ai = genkit({
+  plugins: [
+    googleAI({
+      apiKey: process.env.GOOGLE_AI_API_KEY || functions.config().googleai?.apikey
+    })
+  ]
+});
 
 // Free OpenStreetMap Overpass API - no API key needed
 exports.searchRestaurants = functions.https.onCall(async (data, context) => {
@@ -107,16 +118,26 @@ exports.searchRestaurants = functions.https.onCall(async (data, context) => {
         }
         return a.distanceNum - b.distanceNum;
       })
-      .slice(0, 10)
-      .map(r => {
-        // Remove temporary fields before returning
-        delete r.distanceNum;
-        delete r.tags;
-        delete r.matchScore;
-        return r;
-      });
+      .slice(0, 10);
 
-    return { restaurants: formattedRestaurants };
+    // Generate AI explanations for each restaurant
+    const restaurantsWithAI = await Promise.all(
+      formattedRestaurants.map(async (restaurant) => {
+        // Generate AI explanation if preferences are available
+        if (preferences && preferences.length > 0) {
+          const aiExplanation = await generateRestaurantExplanation(restaurant, preferences);
+          restaurant.aiExplanation = aiExplanation;
+        }
+
+        // Remove temporary fields before returning
+        delete restaurant.distanceNum;
+        delete restaurant.tags;
+        delete restaurant.matchScore;
+        return restaurant;
+      })
+    );
+
+    return { restaurants: restaurantsWithAI };
   } catch (error) {
     console.error('Error fetching restaurants:', error);
     throw new functions.https.HttpsError('internal', 'Failed to fetch restaurants');
@@ -267,4 +288,77 @@ function calculateMatchScore(restaurant, preferences) {
 
   // Normalize score to 0-100
   return totalWeight > 0 ? (score / totalWeight) * 100 : 50;
+}
+
+// AI-powered function to generate personalized restaurant explanations
+async function generateRestaurantExplanation(restaurant, preferences) {
+  try {
+    const prompt = `You are a helpful assistant analyzing restaurant recommendations for a team lunch.
+
+Restaurant: ${restaurant.name}
+Cuisine: ${restaurant.cuisine}
+Address: ${restaurant.address}
+Distance: ${restaurant.distance}
+
+Team Preferences:
+${preferences.map((pref, i) => `
+${i + 1}. ${pref.name}
+   - Preferred Cuisine: ${pref.foodType}
+   - Hunger Level: ${pref.hungerLevel}
+   - Flavor Preference: ${pref.flavorPreference}
+   - Mood/Occasion: ${pref.mood}
+`).join('')}
+
+Please analyze this restaurant and provide:
+1. A brief team consensus (2-3 sentences) explaining why this restaurant is a good choice for the team overall
+2. Per-person matches: For each team member, explain in 1 sentence how well this restaurant fits their specific preferences
+3. Any conflicts or concerns: Identify if anyone's preferences aren't being met and suggest what they might order
+4. Dietary insights: Suggest specific menu items or dish types that would satisfy different hunger levels and flavor preferences
+
+Format your response as JSON with this structure:
+{
+  "teamConsensus": "string",
+  "perPersonMatches": [
+    {"name": "string", "match": "string"}
+  ],
+  "conflicts": ["string"],
+  "dietaryInsights": "string"
+}`;
+
+    const result = await ai.generate({
+      model: gemini15Flash,
+      prompt: prompt,
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 1000
+      }
+    });
+
+    // Parse the JSON response
+    const responseText = result.text();
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+
+    // Fallback if JSON parsing fails
+    return {
+      teamConsensus: responseText,
+      perPersonMatches: preferences.map(p => ({ name: p.name, match: "Good fit based on team preferences" })),
+      conflicts: [],
+      dietaryInsights: "Various options available to satisfy different preferences"
+    };
+  } catch (error) {
+    console.error('Error generating AI explanation:', error);
+    // Return a simple fallback
+    return {
+      teamConsensus: `${restaurant.name} offers ${restaurant.cuisine} cuisine and is ${restaurant.distance} away, making it a convenient choice for the team.`,
+      perPersonMatches: preferences.map(p => ({
+        name: p.name,
+        match: `Matches your ${p.mood} mood preference`
+      })),
+      conflicts: [],
+      dietaryInsights: "Menu offers variety to accommodate different preferences"
+    };
+  }
 }

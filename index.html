@@ -493,7 +493,7 @@
             }
 
             html += '<div class="restaurants-grid">';
-            restaurants.forEach(restaurant => {
+            restaurants.forEach((restaurant, index) => {
                 html += `
                     <div class="restaurant-card">
                         <h4>${restaurant.name}</h4>
@@ -504,6 +504,55 @@
                             <span class="price">${restaurant.priceLevel}</span>
                             ${restaurant.takeout ? '<span class="takeout-badge">🥡 Takeout Available</span>' : ''}
                         </div>
+                `;
+
+                // Add AI-generated explanation if available
+                if (restaurant.aiExplanation) {
+                    const ai = restaurant.aiExplanation;
+                    html += `
+                        <div class="ai-explanation">
+                            <div class="ai-section">
+                                <h5>🤖 AI Analysis</h5>
+                                <p class="team-consensus">${ai.teamConsensus}</p>
+                            </div>
+
+                            <button class="expand-btn" onclick="toggleDetails(${index})">
+                                <span id="toggle-text-${index}">Show Detailed Analysis</span>
+                            </button>
+
+                            <div class="ai-details" id="ai-details-${index}">
+                                ${ai.perPersonMatches && ai.perPersonMatches.length > 0 ? `
+                                    <div class="ai-section">
+                                        <h6>👥 Personal Matches</h6>
+                                        <ul class="person-matches">
+                                            ${ai.perPersonMatches.map(match => `
+                                                <li><strong>${match.name}:</strong> ${match.match}</li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+
+                                ${ai.conflicts && ai.conflicts.length > 0 ? `
+                                    <div class="ai-section conflicts">
+                                        <h6>⚠️ Considerations</h6>
+                                        <ul>
+                                            ${ai.conflicts.map(conflict => `<li>${conflict}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+
+                                ${ai.dietaryInsights ? `
+                                    <div class="ai-section">
+                                        <h6>🍴 Menu Suggestions</h6>
+                                        <p>${ai.dietaryInsights}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += `
                         <button class="btn btn-primary" onclick="window.selectRestaurant('${restaurant.name}', '${restaurant.address}')">
                             Choose This Restaurant
                         </button>
@@ -534,6 +583,20 @@
             if (!str) return '';
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
+
+        // Toggle AI details visibility
+        window.toggleDetails = function(index) {
+            const detailsDiv = document.getElementById(`ai-details-${index}`);
+            const toggleText = document.getElementById(`toggle-text-${index}`);
+
+            if (detailsDiv.style.display === 'none' || !detailsDiv.style.display) {
+                detailsDiv.style.display = 'block';
+                toggleText.textContent = 'Hide Detailed Analysis';
+            } else {
+                detailsDiv.style.display = 'none';
+                toggleText.textContent = 'Show Detailed Analysis';
+            }
+        };
     </script>
 </body>
 </html>

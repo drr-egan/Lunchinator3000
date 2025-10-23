@@ -12,9 +12,12 @@
   },
   "main": "index.js",
   "dependencies": {
-    "firebase-admin": "^11.8.0",
+    "firebase-admin": "^12.2.0",
     "firebase-functions": "^4.3.1",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "genkit": "^1.18.0",
+    "@genkit-ai/googleai": "^1.18.0",
+    "@genkit-ai/firebase": "^1.18.0"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.1.0"
