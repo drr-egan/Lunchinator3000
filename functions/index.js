@@ -1,7 +1,12 @@
 const functions = require('firebase-functions');
+const admin = require('firebase-admin');
 const fetch = require('node-fetch');
 const { genkit } = require('genkit');
 const { googleAI, gemini15Flash } = require('@genkit-ai/googleai');
+
+// Initialize Firebase Admin
+admin.initializeApp();
+const db = admin.firestore();
 
 // Initialize Genkit with Google AI
 const ai = genkit({
@@ -290,17 +295,70 @@ function calculateMatchScore(restaurant, preferences) {
   return totalWeight > 0 ? (score / totalWeight) * 100 : 50;
 }
 
+// Look up restaurant data from cache
+async function getRestaurantData(restaurantName) {
+  try {
+    // Normalize restaurant name for lookup
+    const normalizedName = restaurantName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    const docRef = db.collection('restaurant_data').doc(normalizedName);
+    const doc = await docRef.get();
+
+    if (doc.exists) {
+      return doc.data();
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching restaurant data from cache:', error);
+    return null;
+  }
+}
+
 // AI-powered function to generate personalized restaurant explanations
 async function generateRestaurantExplanation(restaurant, preferences) {
+  // Check if we have cached restaurant data
+  const cachedData = await getRestaurantData(restaurant.name);
+
+  // If no cached data, return "not enough data" message
+  if (!cachedData) {
+    return {
+      teamConsensus: "Not enough data available for personalized recommendations.",
+      perPersonMatches: [],
+      conflicts: [],
+      dietaryInsights: ""
+    };
+  }
+
   try {
-    const prompt = `You are a helpful assistant analyzing restaurant recommendations for a team lunch.
+    // Build menu context from cached data
+    const menuContext = cachedData.popular_dishes.map(dish => {
+      const tags = dish.tags ? dish.tags.join(', ') : '';
+      return `- ${dish.name} (${dish.portion} portion${tags ? ', ' + tags : ''}, mentioned by ${dish.mentions} customers)`;
+    }).join('\n');
+
+    const customerQuotes = cachedData.customer_quotes.map(quote => {
+      return `- "${quote.quote}" (about ${quote.dish})`;
+    }).join('\n');
+
+    const prompt = `You are a restaurant recommendation analyst helping a team decide where to eat lunch.
 
 Restaurant: ${restaurant.name}
 Cuisine: ${restaurant.cuisine}
 Address: ${restaurant.address}
 Distance: ${restaurant.distance}
+Average Rating: ${cachedData.avg_rating}
+Price Range: ${cachedData.price_range}
+Portion Reputation: ${cachedData.portion_reputation}
+Dietary Options: ${cachedData.dietary_options.join(', ')}
 
-Team Preferences:
+ACTUAL MENU ITEMS (from customer reviews):
+${menuContext}
+
+REAL CUSTOMER FEEDBACK:
+${customerQuotes}
+
+Team Members and Their Preferences:
 ${preferences.map((pref, i) => `
 ${i + 1}. ${pref.name}
    - Preferred Cuisine: ${pref.foodType}
@@ -309,20 +367,22 @@ ${i + 1}. ${pref.name}
    - Mood/Occasion: ${pref.mood}
 `).join('')}
 
-Please analyze this restaurant and provide:
-1. A brief team consensus (2-3 sentences) explaining why this restaurant is a good choice for the team overall
-2. Per-person matches: For each team member, explain in 1 sentence how well this restaurant fits their specific preferences
-3. Any conflicts or concerns: Identify if anyone's preferences aren't being met and suggest what they might order
-4. Dietary insights: Suggest specific menu items or dish types that would satisfy different hunger levels and flavor preferences
+Based on the ACTUAL MENU ITEMS above, provide:
+1. Team consensus: 2-3 sentences explaining why this restaurant works for the team
+2. Per-person matches: For EACH team member, recommend SPECIFIC dishes from the menu that match their preferences
+3. Conflicts: Identify if anyone's preferences aren't well-met and suggest alternatives
+4. Dietary insights: Suggest specific dishes for different hunger levels/flavors
 
-Format your response as JSON with this structure:
+IMPORTANT: Only recommend dishes that are listed in the menu above. Be specific with dish names.
+
+Format as JSON:
 {
   "teamConsensus": "string",
   "perPersonMatches": [
-    {"name": "string", "match": "string"}
+    {"name": "string", "match": "string (mention specific dishes)"}
   ],
   "conflicts": ["string"],
-  "dietaryInsights": "string"
+  "dietaryInsights": "string (mention specific dishes)"
 }`;
 
     const result = await ai.generate({
@@ -330,7 +390,7 @@ Format your response as JSON with this structure:
       prompt: prompt,
       config: {
         temperature: 0.7,
-        maxOutputTokens: 1000
+        maxOutputTokens: 1200
       }
     });
 
@@ -343,22 +403,22 @@ Format your response as JSON with this structure:
 
     // Fallback if JSON parsing fails
     return {
-      teamConsensus: responseText,
-      perPersonMatches: preferences.map(p => ({ name: p.name, match: "Good fit based on team preferences" })),
+      teamConsensus: `${restaurant.name} offers ${restaurant.cuisine} cuisine with popular items including ${cachedData.popular_dishes.slice(0, 2).map(d => d.name).join(' and ')}.`,
+      perPersonMatches: preferences.map(p => ({
+        name: p.name,
+        match: "See menu items above for recommendations"
+      })),
       conflicts: [],
-      dietaryInsights: "Various options available to satisfy different preferences"
+      dietaryInsights: `Popular dishes include: ${cachedData.popular_dishes.slice(0, 3).map(d => d.name).join(', ')}`
     };
   } catch (error) {
     console.error('Error generating AI explanation:', error);
-    // Return a simple fallback
+    // Return error fallback
     return {
-      teamConsensus: `${restaurant.name} offers ${restaurant.cuisine} cuisine and is ${restaurant.distance} away, making it a convenient choice for the team.`,
-      perPersonMatches: preferences.map(p => ({
-        name: p.name,
-        match: `Matches your ${p.mood} mood preference`
-      })),
+      teamConsensus: "Error generating personalized recommendations.",
+      perPersonMatches: [],
       conflicts: [],
-      dietaryInsights: "Menu offers variety to accommodate different preferences"
+      dietaryInsights: ""
     };
   }
 }
