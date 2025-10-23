@@ -8,8 +8,7 @@
  */
 
 const admin = require('firebase-admin');
-const { genkit } = require('genkit');
-const { googleAI, gemini15Flash } = require('@genkit-ai/googleai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const fetch = require('node-fetch');
 require('dotenv').config({ path: '../functions/.env' });
 
@@ -21,14 +20,9 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-// Initialize Genkit with Google AI
-const ai = genkit({
-  plugins: [
-    googleAI({
-      apiKey: process.env.GOOGLE_AI_API_KEY
-    })
-  ]
-});
+// Initialize Google Generative AI
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 // Target location: Champlin, MN
 const LOCATION = {
@@ -87,17 +81,10 @@ Format your response as JSON:
 
 Be realistic and specific to ${cuisine} cuisine. Use actual dish names that would appear on a real menu.`;
 
-    const result = await ai.generate({
-      model: gemini15Flash,
-      prompt: prompt,
-      config: {
-        temperature: 0.7,
-        maxOutputTokens: 1500
-      }
-    });
+    const result = await model.generateContent(prompt);
 
     // Parse AI response
-    const responseText = result.text();
+    const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {

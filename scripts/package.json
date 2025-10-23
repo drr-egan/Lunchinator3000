@@ -6,10 +6,10 @@
     "scrape": "node scrape-restaurants.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@google-cloud/firestore": "^7.0.0",
+    "dotenv": "^16.0.3",
     "firebase-admin": "^12.2.0",
-    "genkit": "^1.18.0",
-    "@genkit-ai/googleai": "^1.18.0",
-    "node-fetch": "^2.6.7",
-    "dotenv": "^16.0.3"
+    "node-fetch": "^2.6.7"
   }
 }

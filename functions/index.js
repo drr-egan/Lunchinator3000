@@ -2,7 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const fetch = require('node-fetch');
 const { genkit } = require('genkit');
-const { googleAI, gemini15Flash } = require('@genkit-ai/googleai');
+const { googleAI, gemini20Flash } = require('@genkit-ai/googleai');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -386,7 +386,7 @@ Format as JSON:
 }`;
 
     const result = await ai.generate({
-      model: gemini15Flash,
+      model: gemini20Flash,
       prompt: prompt,
       config: {
         temperature: 0.7,
